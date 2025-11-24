@@ -22,6 +22,7 @@ import {
 import { Search } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 
 interface Product {
   stacklineSku: string;
@@ -32,17 +33,30 @@ interface Product {
 }
 
 export default function Home() {
+  const searchParams = useSearchParams();
+
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [subCategories, setSubCategories] = useState<string[]>([]);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>(
-    undefined
+    searchParams.get("category") || undefined
   );
   const [selectedSubCategory, setSelectedSubCategory] = useState<
     string | undefined
-  >(undefined);
+  >(searchParams.get("subCategory") || undefined);
+
+  useEffect(() => {
+    const cat = searchParams.get("category");
+    const sub = searchParams.get("subCategory");
+    if (cat !== selectedCategory) setSelectedCategory(cat || undefined);
+    if (sub !== selectedSubCategory) setSelectedSubCategory(sub || undefined);
+  }, [searchParams]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [total, setTotal] = useState(0);
+
+  const [resetKey, setResetKey] = useState(0);
 
   useEffect(() => {
     fetch("/api/categories")
@@ -52,7 +66,10 @@ export default function Home() {
 
   useEffect(() => {
     if (selectedCategory) {
-      fetch(`/api/subcategories`)
+      setSelectedSubCategory(searchParams.get("subCategory") || undefined);
+      const params = new URLSearchParams();
+      params.append("category", selectedCategory);
+      fetch(`/api/subcategories?${params}`)
         .then((res) => res.json())
         .then((data) => setSubCategories(data.subCategories));
     } else {
@@ -61,6 +78,11 @@ export default function Home() {
     }
   }, [selectedCategory]);
 
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(0);
+  }, [search, selectedCategory, selectedSubCategory]);
+
   useEffect(() => {
     setLoading(true);
     const params = new URLSearchParams();
@@ -68,14 +90,16 @@ export default function Home() {
     if (selectedCategory) params.append("category", selectedCategory);
     if (selectedSubCategory) params.append("subCategory", selectedSubCategory);
     params.append("limit", "20");
+    params.append("offset", (page * 20).toString());
 
     fetch(`/api/products?${params}`)
       .then((res) => res.json())
       .then((data) => {
         setProducts(data.products);
+        setTotal(data.total);
         setLoading(false);
       });
-  }, [search, selectedCategory, selectedSubCategory]);
+  }, [search, selectedCategory, selectedSubCategory, page]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -95,6 +119,7 @@ export default function Home() {
             </div>
 
             <Select
+              key={resetKey}
               value={selectedCategory}
               onValueChange={(value) => setSelectedCategory(value || undefined)}
             >
@@ -112,15 +137,17 @@ export default function Home() {
 
             {selectedCategory && subCategories.length > 0 && (
               <Select
+                key={selectedCategory}
                 value={selectedSubCategory}
                 onValueChange={(value) =>
-                  setSelectedSubCategory(value || undefined)
+                  setSelectedSubCategory(value === "all" ? undefined : value)
                 }
               >
                 <SelectTrigger className="w-full md:w-[200px]">
                   <SelectValue placeholder="All Subcategories" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="all">All Subcategories</SelectItem>
                   {subCategories.map((subCat) => (
                     <SelectItem key={subCat} value={subCat}>
                       {subCat}
@@ -137,6 +164,7 @@ export default function Home() {
                   setSearch("");
                   setSelectedCategory(undefined);
                   setSelectedSubCategory(undefined);
+                  setResetKey(prev => prev + 1);
                 }}
               >
                 Clear Filters
@@ -158,7 +186,7 @@ export default function Home() {
         ) : (
           <>
             <p className="text-sm text-muted-foreground mb-4">
-              Showing {products.length} products
+              Showing {page * 20 + 1}-{page * 20 + products.length} of {total} products
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {products.map((product) => (
@@ -166,13 +194,13 @@ export default function Home() {
                   key={product.stacklineSku}
                   href={{
                     pathname: "/product",
-                    query: { product: JSON.stringify(product) },
+                    query: { id: product.stacklineSku },
                   }}
                 >
                   <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
                     <CardHeader className="p-0">
                       <div className="relative h-48 w-full overflow-hidden rounded-t-lg bg-muted">
-                        {product.imageUrls[0] && (
+                        {product.imageUrls?.[0] && (
                           <Image
                             src={product.imageUrls[0]}
                             alt={product.title}
@@ -183,17 +211,27 @@ export default function Home() {
                         )}
                       </div>
                     </CardHeader>
-                    <CardContent className="pt-4">
+                    <CardContent className="pt-4 flex-1">
                       <CardTitle className="text-base line-clamp-2 mb-2">
                         {product.title}
                       </CardTitle>
                       <CardDescription className="flex gap-2 flex-wrap">
-                        <Badge variant="secondary">
-                          {product.categoryName}
-                        </Badge>
-                        <Badge variant="outline">
-                          {product.subCategoryName}
-                        </Badge>
+                        <Link
+                          href={`/?category=${encodeURIComponent(product.categoryName)}`}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Badge variant="secondary" className="hover:bg-secondary/80 cursor-pointer">
+                            {product.categoryName}
+                          </Badge>
+                        </Link>
+                        <Link
+                          href={`/?category=${encodeURIComponent(product.categoryName)}&subCategory=${encodeURIComponent(product.subCategoryName)}`}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Badge variant="outline" className="hover:bg-accent cursor-pointer">
+                            {product.subCategoryName}
+                          </Badge>
+                        </Link>
                       </CardDescription>
                     </CardContent>
                     <CardFooter>
@@ -204,6 +242,53 @@ export default function Home() {
                   </Card>
                 </Link>
               ))}
+            </div>
+
+            <div className="flex justify-center gap-4 mt-8">
+              <Button
+                variant="outline"
+                onClick={() => setPage(p => Math.max(0, p - 1))}
+                disabled={page === 0}
+              >
+                Previous
+              </Button>
+              <div className="flex items-center gap-2">
+                <Input
+                  className="w-16 h-8 text-center"
+                  key={page}
+                  defaultValue={page + 1}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      const val = parseInt(e.currentTarget.value);
+                      const max = Math.ceil(total / 20);
+                      if (!isNaN(val) && val >= 1 && val <= max) {
+                        setPage(val - 1);
+                      } else {
+                        e.currentTarget.value = (page + 1).toString();
+                      }
+                    }
+                  }}
+                  onBlur={(e) => {
+                    const val = parseInt(e.target.value);
+                    const max = Math.ceil(total / 20);
+                    if (!isNaN(val) && val >= 1 && val <= max) {
+                      setPage(val - 1);
+                    } else {
+                      e.target.value = (page + 1).toString();
+                    }
+                  }}
+                />
+                <span className="text-sm text-muted-foreground">
+                  / {Math.ceil(total / 20)}
+                </span>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => setPage(p => p + 1)}
+                disabled={(page + 1) * 20 >= total}
+              >
+                Next
+              </Button>
             </div>
           </>
         )}

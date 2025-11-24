@@ -21,20 +21,21 @@ interface Product {
 
 export default function ProductPage() {
   const searchParams = useSearchParams();
-  const productParam = searchParams.get('product');
+  const idParam = searchParams.get('id');
   const [product, setProduct] = useState<Product | null>(null);
   const [selectedImage, setSelectedImage] = useState(0);
 
   useEffect(() => {
-    if (productParam) {
-      try {
-        const parsedProduct = JSON.parse(productParam);
-        setProduct(parsedProduct);
-      } catch (error) {
-        console.error('Failed to parse product data:', error);
-      }
+    if (idParam) {
+      fetch(`/api/products/${idParam}`)
+        .then((res) => {
+          if (!res.ok) throw new Error('Product not found');
+          return res.json();
+        })
+        .then((data) => setProduct(data))
+        .catch((err) => console.error(err));
     }
-  }, [productParam]);
+  }, [idParam]);
 
   if (!product) {
     return (
@@ -89,9 +90,8 @@ export default function ProductPage() {
                   <button
                     key={idx}
                     onClick={() => setSelectedImage(idx)}
-                    className={`relative h-20 border-2 rounded-lg overflow-hidden ${
-                      selectedImage === idx ? 'border-primary' : 'border-muted'
-                    }`}
+                    className={`relative h-20 border-2 rounded-lg overflow-hidden ${selectedImage === idx ? 'border-primary' : 'border-muted'
+                      }`}
                   >
                     <Image
                       src={url}
@@ -109,8 +109,16 @@ export default function ProductPage() {
           <div className="space-y-6">
             <div>
               <div className="flex gap-2 mb-2">
-                <Badge variant="secondary">{product.categoryName}</Badge>
-                <Badge variant="outline">{product.subCategoryName}</Badge>
+                <Link href={`/?category=${encodeURIComponent(product.categoryName)}`}>
+                  <Badge variant="secondary" className="hover:bg-secondary/80 cursor-pointer">
+                    {product.categoryName}
+                  </Badge>
+                </Link>
+                <Link href={`/?category=${encodeURIComponent(product.categoryName)}&subCategory=${encodeURIComponent(product.subCategoryName)}`}>
+                  <Badge variant="outline" className="hover:bg-accent cursor-pointer">
+                    {product.subCategoryName}
+                  </Badge>
+                </Link>
               </div>
               <h1 className="text-3xl font-bold mb-2">{product.title}</h1>
               <p className="text-sm text-muted-foreground">SKU: {product.retailerSku}</p>
