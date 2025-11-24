@@ -7,8 +7,6 @@ This is a sample eCommerce website that includes:
 - Search Results Page
 - Product Detail Page
 
-The application contains various bugs including UX issues, design problems, functionality bugs, and potential security vulnerabilities.
-
 ## Getting Started
 
 ```bash
@@ -16,22 +14,21 @@ yarn install
 yarn dev
 ```
 
-## Your Task
+## Bug Fixes & Improvements
 
-1. **Identify and fix bugs** - Review the application thoroughly and fix any issues you find
-2. **Document your work** - Create a comprehensive README that includes:
-   - What bugs/issues you identified
-   - How you fixed each issue
-   - Why you chose your approach
-   - Any improvements or enhancements you made
+### [Functionality][UX] Page Navigation & Pagination
+- **Issue**: The product list page lacked navigation controls, limiting access to only the first 20 products.
+- **Fix**: Implemented a complete pagination system to improve data accessibility and user navigation.
+  - Added state management for `page` and `total` counts in `app/page.tsx`.
+  - Updated data fetching logic to support `offset` based pagination.
+  - Added "Previous" and "Next" navigation controls.
+  - Implemented a dynamic page indicator (e.g., "1 / 25") with direct page jump functionality via input.
+  - Enhanced the product count display to show the specific range of visible items (e.g., "Showing 1-20 of 500 products").
 
-We recommend spending no more than 2 hours on this assignment. We are more interested in the quality of your work and your communication than the amount of time you spend or how many bugs you fix!
+### [Functionality] Unconfigured Image Host
+- **Issue**: Images sourced from `images-na.ssl-images-amazon.com` failed to load due to missing domain configuration.
+- **Fix**: Configured `next.config.ts` to include `images-na.ssl-images-amazon.com` in `remotePatterns`, enabling secure image optimization and loading.
 
-## Submission
-
-- Fork this repository
-- Make your fixes and improvements
-- **Replace this README** with your own that clearly documents all changes and your reasoning
-- Provide your Stackline contact with a link to a git repository where you have committed your changes
-
-We're looking for clear communication about your problem-solving process as much as the technical fixes themselves.
+### [Functionality] Product Image Runtime Crash
+- **Issue**: The application encountered a `TypeError` runtime crash when attempting to render products with undefined `imageUrls`.
+- **Fix**: Implemented defensive coding using optional chaining (`product.imageUrls?.[0]`) in `app/page.tsx` to safely handle missing image data without crashing the UI.

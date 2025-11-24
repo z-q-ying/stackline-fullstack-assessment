@@ -43,6 +43,8 @@ export default function Home() {
     string | undefined
   >(undefined);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
     fetch("/api/categories")
@@ -61,6 +63,11 @@ export default function Home() {
     }
   }, [selectedCategory]);
 
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(0);
+  }, [search, selectedCategory, selectedSubCategory]);
+
   useEffect(() => {
     setLoading(true);
     const params = new URLSearchParams();
@@ -68,14 +75,16 @@ export default function Home() {
     if (selectedCategory) params.append("category", selectedCategory);
     if (selectedSubCategory) params.append("subCategory", selectedSubCategory);
     params.append("limit", "20");
+    params.append("offset", (page * 20).toString());
 
     fetch(`/api/products?${params}`)
       .then((res) => res.json())
       .then((data) => {
         setProducts(data.products);
+        setTotal(data.total);
         setLoading(false);
       });
-  }, [search, selectedCategory, selectedSubCategory]);
+  }, [search, selectedCategory, selectedSubCategory, page]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -158,7 +167,7 @@ export default function Home() {
         ) : (
           <>
             <p className="text-sm text-muted-foreground mb-4">
-              Showing {products.length} products
+              Showing {page * 20 + 1}-{page * 20 + products.length} of {total} products
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {products.map((product) => (
@@ -172,7 +181,7 @@ export default function Home() {
                   <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
                     <CardHeader className="p-0">
                       <div className="relative h-48 w-full overflow-hidden rounded-t-lg bg-muted">
-                        {product.imageUrls[0] && (
+                        {product.imageUrls?.[0] && (
                           <Image
                             src={product.imageUrls[0]}
                             alt={product.title}
@@ -204,6 +213,53 @@ export default function Home() {
                   </Card>
                 </Link>
               ))}
+            </div>
+
+            <div className="flex justify-center gap-4 mt-8">
+              <Button
+                variant="outline"
+                onClick={() => setPage(p => Math.max(0, p - 1))}
+                disabled={page === 0}
+              >
+                Previous
+              </Button>
+              <div className="flex items-center gap-2">
+                <Input
+                  className="w-16 h-8 text-center"
+                  key={page}
+                  defaultValue={page + 1}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      const val = parseInt(e.currentTarget.value);
+                      const max = Math.ceil(total / 20);
+                      if (!isNaN(val) && val >= 1 && val <= max) {
+                        setPage(val - 1);
+                      } else {
+                        e.currentTarget.value = (page + 1).toString();
+                      }
+                    }
+                  }}
+                  onBlur={(e) => {
+                    const val = parseInt(e.target.value);
+                    const max = Math.ceil(total / 20);
+                    if (!isNaN(val) && val >= 1 && val <= max) {
+                      setPage(val - 1);
+                    } else {
+                      e.target.value = (page + 1).toString();
+                    }
+                  }}
+                />
+                <span className="text-sm text-muted-foreground">
+                  / {Math.ceil(total / 20)}
+                </span>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => setPage(p => p + 1)}
+                disabled={(page + 1) * 20 >= total}
+              >
+                Next
+              </Button>
             </div>
           </>
         )}
