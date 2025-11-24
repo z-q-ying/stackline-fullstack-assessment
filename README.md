@@ -31,7 +31,7 @@ yarn dev
   - Updated the API fetch to filter subcategories by the selected category.
   - Added an "All Subcategories" option to the dropdown for easy resetting.
   - Added logic to automatically clear the subcategory when the main category changes.
-  - Fixed UI state issues to ensure dropdowns visually reset correctly.
+  - Used a `resetKey` to force the Category dropdown to visually reset when clicking "Clear Filters".
 
 ### [Functionality] Unconfigured Image Host
 - **Issue**: Images sourced from `images-na.ssl-images-amazon.com` failed to load due to missing domain configuration.
@@ -40,3 +40,7 @@ yarn dev
 ### [Functionality] Product Image Runtime Crash
 - **Issue**: The application encountered a `TypeError` runtime crash when attempting to render products with undefined `imageUrls`.
 - **Fix**: Implemented defensive coding using optional chaining (`product.imageUrls?.[0]`) in `app/page.tsx` to safely handle missing image data without crashing the UI.
+
+### [UI/Design] Card Alignment
+- **Issue**: The "View Details" button wasn't aligned across cards because product tags have varying heights.
+- **Fix**: Added `flex-1` to `CardContent` to push the footer to the bottom, making all cards consistent.

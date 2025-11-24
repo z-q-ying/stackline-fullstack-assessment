@@ -46,6 +46,8 @@ export default function Home() {
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
 
+  const [resetKey, setResetKey] = useState(0);
+
   useEffect(() => {
     fetch("/api/categories")
       .then((res) => res.json())
@@ -107,6 +109,7 @@ export default function Home() {
             </div>
 
             <Select
+              key={resetKey}
               value={selectedCategory}
               onValueChange={(value) => setSelectedCategory(value || undefined)}
             >
@@ -151,6 +154,7 @@ export default function Home() {
                   setSearch("");
                   setSelectedCategory(undefined);
                   setSelectedSubCategory(undefined);
+                  setResetKey(prev => prev + 1);
                 }}
               >
                 Clear Filters
@@ -197,7 +201,7 @@ export default function Home() {
                         )}
                       </div>
                     </CardHeader>
-                    <CardContent className="pt-4">
+                    <CardContent className="pt-4 flex-1">
                       <CardTitle className="text-base line-clamp-2 mb-2">
                         {product.title}
                       </CardTitle>
