@@ -22,6 +22,7 @@ import {
 import { Search } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 
 interface Product {
   stacklineSku: string;
@@ -32,16 +33,25 @@ interface Product {
 }
 
 export default function Home() {
+  const searchParams = useSearchParams();
+
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [subCategories, setSubCategories] = useState<string[]>([]);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>(
-    undefined
+    searchParams.get("category") || undefined
   );
   const [selectedSubCategory, setSelectedSubCategory] = useState<
     string | undefined
-  >(undefined);
+  >(searchParams.get("subCategory") || undefined);
+
+  useEffect(() => {
+    const cat = searchParams.get("category");
+    const sub = searchParams.get("subCategory");
+    if (cat !== selectedCategory) setSelectedCategory(cat || undefined);
+    if (sub !== selectedSubCategory) setSelectedSubCategory(sub || undefined);
+  }, [searchParams]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
@@ -56,7 +66,7 @@ export default function Home() {
 
   useEffect(() => {
     if (selectedCategory) {
-      setSelectedSubCategory(undefined);
+      setSelectedSubCategory(searchParams.get("subCategory") || undefined);
       const params = new URLSearchParams();
       params.append("category", selectedCategory);
       fetch(`/api/subcategories?${params}`)
@@ -206,12 +216,22 @@ export default function Home() {
                         {product.title}
                       </CardTitle>
                       <CardDescription className="flex gap-2 flex-wrap">
-                        <Badge variant="secondary">
-                          {product.categoryName}
-                        </Badge>
-                        <Badge variant="outline">
-                          {product.subCategoryName}
-                        </Badge>
+                        <Link
+                          href={`/?category=${encodeURIComponent(product.categoryName)}`}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Badge variant="secondary" className="hover:bg-secondary/80 cursor-pointer">
+                            {product.categoryName}
+                          </Badge>
+                        </Link>
+                        <Link
+                          href={`/?category=${encodeURIComponent(product.categoryName)}&subCategory=${encodeURIComponent(product.subCategoryName)}`}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Badge variant="outline" className="hover:bg-accent cursor-pointer">
+                            {product.subCategoryName}
+                          </Badge>
+                        </Link>
                       </CardDescription>
                     </CardContent>
                     <CardFooter>

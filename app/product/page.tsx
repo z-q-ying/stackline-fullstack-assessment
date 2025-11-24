@@ -109,8 +109,16 @@ export default function ProductPage() {
           <div className="space-y-6">
             <div>
               <div className="flex gap-2 mb-2">
-                <Badge variant="secondary">{product.categoryName}</Badge>
-                <Badge variant="outline">{product.subCategoryName}</Badge>
+                <Link href={`/?category=${encodeURIComponent(product.categoryName)}`}>
+                  <Badge variant="secondary" className="hover:bg-secondary/80 cursor-pointer">
+                    {product.categoryName}
+                  </Badge>
+                </Link>
+                <Link href={`/?category=${encodeURIComponent(product.categoryName)}&subCategory=${encodeURIComponent(product.subCategoryName)}`}>
+                  <Badge variant="outline" className="hover:bg-accent cursor-pointer">
+                    {product.subCategoryName}
+                  </Badge>
+                </Link>
               </div>
               <h1 className="text-3xl font-bold mb-2">{product.title}</h1>
               <p className="text-sm text-muted-foreground">SKU: {product.retailerSku}</p>
