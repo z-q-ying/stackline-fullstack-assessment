@@ -25,6 +25,14 @@ yarn dev
   - Implemented a dynamic page indicator (e.g., "1 / 25") with direct page jump functionality via input.
   - Enhanced the product count display to show the specific range of visible items (e.g., "Showing 1-20 of 500 products").
 
+### [Functionality][UX] Filter Logic & UI State
+- **Issue**: Filtering was buggy—subcategories didn't update when changing categories, and once a subcategory was picked, you couldn't unselect it without clearing everything.
+- **Fix**:
+  - Updated the API fetch to filter subcategories by the selected category.
+  - Added an "All Subcategories" option to the dropdown for easy resetting.
+  - Added logic to automatically clear the subcategory when the main category changes.
+  - Fixed UI state issues to ensure dropdowns visually reset correctly.
+
 ### [Functionality] Unconfigured Image Host
 - **Issue**: Images sourced from `images-na.ssl-images-amazon.com` failed to load due to missing domain configuration.
 - **Fix**: Configured `next.config.ts` to include `images-na.ssl-images-amazon.com` in `remotePatterns`, enabling secure image optimization and loading.

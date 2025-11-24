@@ -54,7 +54,10 @@ export default function Home() {
 
   useEffect(() => {
     if (selectedCategory) {
-      fetch(`/api/subcategories`)
+      setSelectedSubCategory(undefined);
+      const params = new URLSearchParams();
+      params.append("category", selectedCategory);
+      fetch(`/api/subcategories?${params}`)
         .then((res) => res.json())
         .then((data) => setSubCategories(data.subCategories));
     } else {
@@ -121,15 +124,17 @@ export default function Home() {
 
             {selectedCategory && subCategories.length > 0 && (
               <Select
+                key={selectedCategory}
                 value={selectedSubCategory}
                 onValueChange={(value) =>
-                  setSelectedSubCategory(value || undefined)
+                  setSelectedSubCategory(value === "all" ? undefined : value)
                 }
               >
                 <SelectTrigger className="w-full md:w-[200px]">
                   <SelectValue placeholder="All Subcategories" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="all">All Subcategories</SelectItem>
                   {subCategories.map((subCat) => (
                     <SelectItem key={subCat} value={subCat}>
                       {subCat}
