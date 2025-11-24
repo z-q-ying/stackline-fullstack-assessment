@@ -184,7 +184,7 @@ export default function Home() {
                   key={product.stacklineSku}
                   href={{
                     pathname: "/product",
-                    query: { product: JSON.stringify(product) },
+                    query: { id: product.stacklineSku },
                   }}
                 >
                   <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">

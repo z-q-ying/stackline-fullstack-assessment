@@ -44,3 +44,7 @@ yarn dev
 ### [UI/Design] Card Alignment
 - **Issue**: The "View Details" button wasn't aligned across cards because product tags have varying heights.
 - **Fix**: Added `flex-1` to `CardContent` to push the footer to the bottom, making all cards consistent.
+
+### [Security] Sensitive Data Exposure
+- **Issue**: The application was passing the entire product object (including potentially sensitive fields) as a URL parameter (`?product={...}`).
+- **Fix**: Changed the routing to pass only the product ID (`?id=...`) and fetch the product details securely from the API on the details page.
